@@ -1,10 +1,10 @@
-from tkinter import Tk, Entry, Canvas, END
+import pygame as pg
 
-from game import Game
+from gameplay import Gameplay
 from menu import MainMenu, GameOver
 
 
-class Window:
+class Game:
     WIDTH, HEIGHT = 1000, 500  # Aspect ratio must be 2:1
 
     EASY_SPEED = 0.5  # 0.5
@@ -25,76 +25,94 @@ class Window:
         self.word_speed = self.NORMAL_SPEED
         self.in_game_lives = self.LIVES
 
-        self.screen = Tk()
-        self.screen.title("Typing Game")
-        self.screen.geometry(f"{self.WIDTH}x{self.HEIGHT}")
-        self.screen.resizable(False, False)
+        pg.font.init()
+        self.screen = pg.display.set_mode((self.WIDTH, self.HEIGHT))
+        pg.display.set_caption("Typing Game")
+        self.clock = pg.time.Clock()
+        self.FPS = 60
 
-        self.text_area = Entry(self.screen)
-        self.text_area.place(x=0, y=0)
-        self.text_area.focus()
+        self.text_input = ""
 
-        self.typed_word = self.text_area.get()
+        self.main_menu = True
+        self.gameplay = False
+        self.game_over = False
 
-        self.canvas = Canvas(
+        self.gameplay_screen = Gameplay(
             self.screen,
-            width=self.WIDTH,
-            height=self.HEIGHT,
-            background="black"
-        )
-        self.canvas.pack()
-
-        self.screen.bind("<Destroy>", self.close_window)
-
-        self.game = Game(
-            self.screen,
-            self.canvas,
             WORD_LIST,
             self.NORMAL_SPEED,
-            self.text_area,
             self.LIVES,
             self.NUM_OF_ENEMIES,
             self.WIDTH,
             self.HEIGHT
         )
-        self.main_menu = MainMenu(
+        self.main_menu_screen = MainMenu(
             self.screen,
-            self.canvas,
-            self.text_area,
             (self.EASY_SPEED, self.NORMAL_SPEED, self.HARD_SPEED),
             self.WIDTH,
             self.HEIGHT
         )
-        self.game_over = GameOver(
+        self.game_over_screen = GameOver(
             self.screen,
-            self.canvas,
-            self.text_area,
             self.LIVES,
             self.WIDTH,
             self.HEIGHT
         )
 
-    def clear_text_area(self, event):
-        self.text_area.delete(0, END)
+    def update(self):
+        if self.main_menu:
+            recv = self.main_menu_screen.start(self.text_input)
+            if type(recv) is str:
+                if recv == "s":
+                    self.main_menu = False
+                    self.gameplay = True
+                else:
+                    self.running = False
+            elif type(recv) is float or type(recv) is int:
+                self.word_speed = recv
+                self.text_input = ""
 
-    def close_window(self, event):
-        self.running = False
+        elif self.gameplay:
+            pass
 
-    def loop(self):
+        elif self.game_over:
+            pass
+
+    def draw(self):
+        self.screen.fill("black")
+        if self.main_menu:
+            self.main_menu_screen.draw(self.screen, self.text_input)
+
+        elif self.gameplay:
+            pass
+
+        elif self.game_over:
+            pass
+
+    def run(self):
         while self.running:
-            if not self.main_menu.start():
-                print("MENU")
-                break
-            if not self.game.start():
-                print("GAME")
-                break
-            if not self.game_over.start():
-                print("GAME-OVER")
-                break
+            # Handle events
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.running = False
 
-            self.screen.update()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_BACKSPACE:
+                        self.text_input = self.text_input[:-1]
+                    elif event.key == pg.K_SPACE:
+                        self.text_input = ""
+                    else:
+                        self.text_input += event.unicode
+
+            self.update()
+
+            self.draw()
+
+            pg.display.flip()
+
+            self.clock.tick(self.FPS)
 
 
 if __name__ == "__main__":
-    window = Window()
-    window.loop()
+    game = Game()
+    game.run()

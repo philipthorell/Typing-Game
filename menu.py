@@ -1,141 +1,134 @@
-from tkinter import END
-from time import sleep
+import pygame as pg
 
 
 class MainMenu:
-    def __init__(self, screen, canvas, text_area, SPEEDS, WIDTH, HEIGHT):
+    def __init__(self, screen, SPEEDS, WIDTH, HEIGHT):
         self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
 
         self.screen = screen
-        self.canvas = canvas
-        self.text_area = text_area
 
         self.EASY_SPEED, self.NORMAL_SPEED, self.HARD_SPEED = SPEEDS
 
         self.word_speed = self.NORMAL_SPEED
 
         self.running = True
-        self.initialized = False
 
-    def initialize(self):
         self.start_text = "start"
-        self.start_items = []
-        self.create_text_items(self.canvas, self.start_text, 400, 200, 80, self.start_items)
-
+        self.start_items = [(char, (255, 255, 255)) for char in self.start_text]
         self.exit_text = "exit"
-        self.exit_items = []
-        self.create_text_items(self.canvas, self.exit_text, 470, 400, 30, self.exit_items)
-
+        self.exit_items = [(char, (255, 255, 255)) for char in self.exit_text]
         self.easy_text = "easy"
-        self.easy_items = []
-        self.create_text_items(self.canvas, self.easy_text, 720, 150, 25, self.easy_items)
-
+        self.easy_items = [(char, (255, 255, 255)) for char in self.easy_text]
         self.normal_text = "normal"
-        self.normal_items = []
-        self.create_text_items(self.canvas, self.normal_text, 700, 200, 25, self.normal_items)
-
+        self.normal_items = [(char, (255, 255, 255)) for char in self.normal_text]
         self.hard_text = "hard"
-        self.hard_items = []
-        self.create_text_items(self.canvas, self.hard_text, 720, 250, 25, self.hard_items)
+        self.hard_items = [(char, (255, 255, 255)) for char in self.hard_text]
 
-        self.arrow = self.canvas.create_text(830, 200, text="<", font=("Consolas", 25), fill="white")
-        self.tip = self.canvas.create_text(150, self.HEIGHT - 40, text="(spacebar = clear text)", font=("Consolas", 15),
-                                      fill="white")
+        self.arrow_y = 200
 
-        self.screen.bind("<Destroy>", self.close_window)
-        self.screen.bind("<space>", self.clear_text_area)
+    def check_word(self, typed_word: str, items: list[tuple[str, tuple[int, int, int]]], correct_text: str):
+        typed_letters = min(len(typed_word), len(correct_text))
 
-    def close_window(self, event):
-        self.running = False
+        # Start with everything white
+        for i in range(len(items)):
+            items[i] = (correct_text[i], (255, 255, 255))  # white
 
-    def start(self):
-        self.initialize()
+        # Apply green color progressively if each letter is correct
+        if typed_letters > 0 and typed_word[0] == correct_text[0]:
+            items[0] = (correct_text[0], (0, 255, 0))  # green
 
-        return self.main_menu()
+            for i in range(1, typed_letters):
+                if typed_word[i] == correct_text[i] and items[i - 1][1] == (0, 255, 0):
+                    items[i] = (correct_text[i], (0, 255, 0))  # green
+                else:
+                    break
 
-    def check_word(self, typed_word, items, text):
+    @staticmethod
+    def create_word_surface(items: list[tuple[str, tuple[int, int, int]]],
+                            font: pg.font.Font, padding=10):
+        """Render a word from (char, color) items into a single surface, and return it with its rect."""
+        char_surfaces = []
+        total_width = 0
+        max_height = 0
 
-        typed_letters = min(len(typed_word), len(text))
+        # Render each character surface
+        for char, color in items:
+            surf = font.render(char, True, color)
+            char_surfaces.append(surf)
+            total_width += surf.get_width() + padding
+            max_height = max(max_height, surf.get_height())
 
-        # Check if the first letter is correct
-        if typed_letters > 0 and typed_word[0] == text[0]:
-            self.canvas.itemconfig(items[0], fill="#00FF00")  # Set the color to green
+        word_surface = pg.Surface((total_width, max_height), pg.SRCALPHA)
+        x = 0
+        for surf in char_surfaces:
+            word_surface.blit(surf, (x, 0))
+            x += surf.get_width() + padding
 
-        # Check if subsequent letters are correct and the preceding letter is green
-        for i in range(1, typed_letters):
-            if typed_word[i] == text[i] and self.canvas.itemcget(items[i - 1], "fill") == "#00FF00":
-                self.canvas.itemconfig(items[i], fill="#00FF00")  # Set the color to green
-            else:
-                for i in range(len(text)):
-                    self.canvas.itemconfig(items[i], fill="white")
-                break  # Stop setting colors if the preceding letter is not green
+        return word_surface, word_surface.get_rect()
 
-        # Reset the color of remaining letters in self.word
-        for i in range(typed_letters, len(text)):
-            self.canvas.itemconfig(items[i], fill="white")
+    def draw_text(self, screen: pg.Surface, text_input: str, items: list,
+                  text: str, font_size: int, pos: tuple[int, int]):
 
-    def clear_text_area(self, event):
-        self.text_area.delete(0, END)
+        self.check_word(text_input, items, text)
+        # Create the word surface
+        font = pg.font.SysFont("Consolas", font_size)
+        word_surface, word_rect = self.create_word_surface(items, font)
+        word_rect.center = pos  # Move the box around as needed
+        screen.blit(word_surface, word_rect)
 
-    def create_text_items(self, canvas, text, x, y, font_size, items_list):
-        for char in text:
-            item_id = canvas.create_text(x, y, text=char, font=("Consolas", font_size), fill="white")
-            items_list.append(item_id)
-            x += 55 if font_size == 80 else 20  # Adjust x position based on font size
+    def draw_arrow(self, screen: pg.Surface):
+        font = pg.font.SysFont("Consolas", 25)
+        arrow_surf = font.render("<", True, "white")
+        arrow_rect = arrow_surf.get_rect(center=(870, self.arrow_y))
+        screen.blit(arrow_surf, arrow_rect)
 
-    def main_menu(self):
+    def draw_tip(self, screen: pg.Surface):
+        font = pg.font.SysFont("Consolas", 15)
+        tip_surf = font.render("(spacebar = clear text)", True, "white")
+        tip_rect = tip_surf.get_rect(center=(115, self.HEIGHT - 25))
+        screen.blit(tip_surf, tip_rect)
 
-        while self.running:
-            if self.text_area.get() == "start":
-                self.text_area.delete(0, END)
-                self.canvas.delete(self.arrow)
-                self.canvas.delete(self.tip)
+    def draw(self, screen: pg.Surface, text_input):
+        self.draw_text(screen, text_input, self.start_items, self.start_text,
+                       80, (self.WIDTH // 2, 200))
+        self.draw_text(screen, text_input, self.exit_items, self.exit_text,
+                       30, (self.WIDTH // 2, 400))
 
-                items_lists = [
-                    self.start_items,
-                    self.exit_items,
-                    self.easy_items,
-                    self.normal_items,
-                    self.hard_items
-                ]
-                for items_list in items_lists:
-                    self.canvas.delete(*items_list)
+        self.draw_text(screen, text_input, self.easy_items, self.easy_text,
+                       25, (780, 150))
+        self.draw_text(screen, text_input, self.normal_items, self.normal_text,
+                       25, (780, 200))
+        self.draw_text(screen, text_input, self.hard_items, self.hard_text,
+                       25, (780, 250))
 
-                return True
+        self.draw_arrow(screen)
+        self.draw_tip(screen)
 
-            if self.text_area.get() == "exit":
-                return False
+    def start(self, text_input):
+        if text_input == self.start_text:
+            return "s"
 
-            self.check_word(self.text_area.get(), self.start_items, self.start_text)
-            self.check_word(self.text_area.get(), self.exit_items, self.exit_text)
-            self.check_word(self.text_area.get(), self.easy_items, self.easy_text)
-            self.check_word(self.text_area.get(), self.normal_items, self.normal_text)
-            self.check_word(self.text_area.get(), self.hard_items, self.hard_text)
+        elif text_input == self.exit_text:
+            print("EXIT")
+            return "e"
 
-            if self.text_area.get() == "easy":
-                self.canvas.coords(self.arrow, 830, 150)
-                self.word_speed = self.EASY_SPEED
-                self.text_area.delete(0, END)
-            elif self.text_area.get() == "normal":
-                self.canvas.coords(self.arrow, 830, 200)
-                self.word_speed = self.NORMAL_SPEED
-                self.text_area.delete(0, END)
-            elif self.text_area.get() == "hard":
-                self.canvas.coords(self.arrow, 830, 250)
-                self.word_speed = self.HARD_SPEED
-                self.text_area.delete(0, END)
+        elif text_input == self.easy_text:
+            self.arrow_y = 150
+            return self.EASY_SPEED
 
-            self.screen.update()
-            sleep(0.01)
+        elif text_input == self.normal_text:
+            self.arrow_y = 200
+            return self.NORMAL_SPEED
 
+        elif text_input == self.hard_text:
+            self.arrow_y = 250
+            return self.HARD_SPEED
 
 class GameOver:
-    def __init__(self, screen, canvas, text_area, LIVES, WIDTH, HEIGHT):
+    def __init__(self, screen, LIVES, WIDTH, HEIGHT):
         self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
 
         self.screen = screen
-        self.canvas = canvas
-        self.text_area = text_area
         self.LIVES = LIVES
 
         self.score = 0
