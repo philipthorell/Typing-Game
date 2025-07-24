@@ -12,6 +12,7 @@ class Game:
     HARD_SPEED = 1.5  # 1.5
     LIVES = 3  # 3
     NUM_OF_ENEMIES = 5  # 5
+    score = 0
 
     def __init__(self):
 
@@ -19,7 +20,8 @@ class Game:
         E_WORDS = "english_words.txt"
 
         with open(S_WORDS, "r") as file:
-            WORD_LIST = file.readlines()
+            all_words = file.readlines()
+            WORD_LIST = [word.replace("\n", "") for word in all_words]
 
         self.running = True
         self.word_speed = self.NORMAL_SPEED
@@ -40,7 +42,6 @@ class Game:
         self.gameplay_screen = Gameplay(
             self.screen,
             WORD_LIST,
-            self.NORMAL_SPEED,
             self.LIVES,
             self.NUM_OF_ENEMIES,
             self.WIDTH,
@@ -66,6 +67,7 @@ class Game:
                 if recv == "s":
                     self.main_menu = False
                     self.gameplay = True
+                    self.text_input = ""
                 else:
                     self.running = False
             elif type(recv) is float or type(recv) is int:
@@ -73,10 +75,27 @@ class Game:
                 self.text_input = ""
 
         elif self.gameplay:
-            pass
+            self.gameplay_screen.update(self.text_input, self.word_speed)
+            if self.gameplay_screen.typed_word:
+                self.text_input = ""
+                self.score += 1
+                self.gameplay_screen.typed_word = False
+            if self.gameplay_screen.lost:
+                self.gameplay = False
+                self.game_over = True
+                self.text_input = ""
+                self.gameplay_screen.lost = False
 
         elif self.game_over:
-            pass
+            self.game_over_screen.update(self.text_input)
+            if self.game_over_screen.main:
+                self.game_over = False
+                self.main_menu = True
+                self.text_input = ""
+                self.score = 0
+                self.game_over_screen.main = False
+            elif self.game_over_screen.exit:
+                self.running = False
 
     def draw(self):
         self.screen.fill("black")
@@ -84,10 +103,10 @@ class Game:
             self.main_menu_screen.draw(self.screen, self.text_input)
 
         elif self.gameplay:
-            pass
+            self.gameplay_screen.draw(self.screen, self.score)
 
         elif self.game_over:
-            pass
+            self.game_over_screen.draw(self.screen, self.text_input, self.score)
 
     def run(self):
         while self.running:

@@ -109,7 +109,6 @@ class MainMenu:
             return "s"
 
         elif text_input == self.exit_text:
-            print("EXIT")
             return "e"
 
         elif text_input == self.easy_text:
@@ -124,6 +123,7 @@ class MainMenu:
             self.arrow_y = 250
             return self.HARD_SPEED
 
+
 class GameOver:
     def __init__(self, screen, LIVES, WIDTH, HEIGHT):
         self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
@@ -131,104 +131,90 @@ class GameOver:
         self.screen = screen
         self.LIVES = LIVES
 
-        self.score = 0
         self.in_game_lives = 0
 
         self.running = True
+        self.main = False
+        self.exit = False
 
         self.main_text = "main"
-        self.main_items = []
+        self.main_items = [(char, (255, 255, 255)) for char in self.main_text]
         self.exit_text = "exit"
-        self.exit_items = []
+        self.exit_items = [(char, (255, 255, 255)) for char in self.exit_text]
 
     def initialize(self):
-        self.create_text_items(
-            self.canvas,
-            self.main_text,
-            470,
-            self.HEIGHT / 2 + self.HEIGHT / 5 + self.HEIGHT / 24,
-            self.main_items
-        )
-        self.create_text_items(
-            self.canvas,
-            self.exit_text,
-            470,
-            self.HEIGHT / 2 + self.HEIGHT / 3,
-            self.exit_items
-        )
-
-        self.game_over_text = self.canvas.create_text(
-            self.WIDTH / 2,
-            self.HEIGHT / 2 - self.HEIGHT / 4 + self.HEIGHT / 8,
-            text="GAME OVER",
-            font=("Consolas", 80),
-            fill="#FF0000"
-        )
-        self.score_text = self.canvas.create_text(
-            self.WIDTH / 2,
-            self.HEIGHT / 2 + self.HEIGHT / 4 - self.HEIGHT / 8 - self.HEIGHT / 16 - self.HEIGHT / 32,
-            text=f"score: {self.score}",
-            font=("Consolas", 40),
-            fill="white"
-        )
-
         self.in_game_lives = self.LIVES
-        self.score = 0
 
-        self.screen.bind("<Destroy>", self.close_window)
+    def check_word(self, typed_word: str, items: list[tuple[str, tuple[int, int, int]]], correct_text: str):
+        typed_letters = min(len(typed_word), len(correct_text))
 
-    def close_window(self, event):
-        self.running = False
+        # Start with everything white
+        for i in range(len(items)):
+            items[i] = (correct_text[i], (255, 255, 255))  # white
 
-    def start(self):
-        self.initialize()
+        # Apply green color progressively if each letter is correct
+        if typed_letters > 0 and typed_word[0] == correct_text[0]:
+            items[0] = (correct_text[0], (0, 255, 0))  # green
 
-        return self.game_over()
+            for i in range(1, typed_letters):
+                if typed_word[i] == correct_text[i] and items[i - 1][1] == (0, 255, 0):
+                    items[i] = (correct_text[i], (0, 255, 0))  # green
+                else:
+                    break
 
-    def check_word(self, typed_word, items, text):
+    def update(self, text_input):
+        if text_input == self.main_text:
+            self.main = True
 
-        typed_letters = min(len(typed_word), len(text))
+        if text_input == self.exit_text:
+            self.exit = True
 
-        # Check if the first letter is correct
-        if typed_letters > 0 and typed_word[0] == text[0]:
-            self.canvas.itemconfig(items[0], fill="#00FF00")  # Set the color to green
+    @staticmethod
+    def create_word_surface(items: list[tuple[str, tuple[int, int, int]]],
+                            font: pg.font.Font, padding=10):
+        """Render a word from (char, color) items into a single surface, and return it with its rect."""
+        char_surfaces = []
+        total_width = 0
+        max_height = 0
 
-        # Check if subsequent letters are correct and the preceding letter is green
-        for i in range(1, typed_letters):
-            if typed_word[i] == text[i] and self.canvas.itemcget(items[i - 1], "fill") == "#00FF00":
-                self.canvas.itemconfig(items[i], fill="#00FF00")  # Set the color to green
-            else:
-                for i in range(len(text)):
-                    self.canvas.itemconfig(items[i], fill="white")
-                break  # Stop setting colors if the preceding letter is not green
+        # Render each character surface
+        for char, color in items:
+            surf = font.render(char, True, color)
+            char_surfaces.append(surf)
+            total_width += surf.get_width() + padding
+            max_height = max(max_height, surf.get_height())
 
-        # Reset the color of remaining letters in self.word
-        for i in range(typed_letters, len(text)):
-            self.canvas.itemconfig(items[i], fill="white")
+        word_surface = pg.Surface((total_width, max_height), pg.SRCALPHA)
+        x = 0
+        for surf in char_surfaces:
+            word_surface.blit(surf, (x, 0))
+            x += surf.get_width() + padding
 
-    def create_text_items(self, canvas, text, x, y, items_list):
-        for char in text:
-            item_id = canvas.create_text(x, y, text=char, font=("Consolas", 25), fill="white")
-            items_list.append(item_id)
-            x += 20
+        return word_surface, word_surface.get_rect()
 
-    def game_over(self):
-        while self.running:
-            if self.text_area.get() == self.main_text:
-                self.text_area.delete(0, END)
-                self.canvas.delete(*self.main_items)
-                self.canvas.delete(*self.exit_items)
-                self.canvas.delete(self.game_over_text)
-                self.canvas.delete(self.score_text)
-                self.main_items = []
-                self.exit_items = []
-                return True
+    def draw_text(self, screen: pg.Surface, text_input: str, items: list,
+                  text: str, font_size: int, pos: tuple[int, int], padding: int = 10):
 
-            self.check_word(self.text_area.get(), self.main_items, self.main_text)
-            self.check_word(self.text_area.get(), self.exit_items, self.exit_text)
+        self.check_word(text_input, items, text)
+        # Create the word surface
+        font = pg.font.SysFont("Consolas", font_size)
+        word_surface, word_rect = self.create_word_surface(items, font, padding)
+        word_rect.center = pos  # Move the box around as needed
+        screen.blit(word_surface, word_rect)
 
-            if self.text_area.get() == self.exit_text:
-                return False
+    def draw(self, screen, text_input, score):
+        self.draw_text(screen, text_input, self.main_items, self.main_text,
+                       30, (self.WIDTH // 2 - 70, 370), padding=5)
 
-            self.screen.update()
-            sleep(0.01)
+        self.draw_text(screen, text_input, self.exit_items, self.exit_text,
+                       30, (self.WIDTH // 2 + 70, 370), padding=5)
+
+        font = pg.font.SysFont("Consolas", 80)
+        gg_surf = font.render("GAME OVER", True, "red")
+        gg_rect = gg_surf.get_rect(center=(self.WIDTH // 2, 160))
+        screen.blit(gg_surf, gg_rect)
+
+        font = pg.font.SysFont("Consolas", 40)
+        score_surf = font.render(f"score: {score}", True, "white")
+        score_rect = score_surf.get_rect(center=(self.WIDTH // 2, 230))
+        screen.blit(score_surf, score_rect)

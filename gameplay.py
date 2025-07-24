@@ -1,10 +1,12 @@
+import pygame as pg
+
 from random import randint
 
 from word import Word
 
 
 class Gameplay:
-    def __init__(self, screen, WORD_LIST, word_speed, LIVES, NUM_OF_ENEMIES, WIDTH, HEIGHT):
+    def __init__(self, screen, WORD_LIST, LIVES, NUM_OF_ENEMIES, WIDTH, HEIGHT):
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
 
@@ -13,34 +15,23 @@ class Gameplay:
         self.WORD_LIST = WORD_LIST
         self.words = []
 
-        self.word_speed = word_speed
+        self.word_speed = 1
 
         self.LIVES = LIVES
         self.in_game_lives = self.LIVES
-        self.score = 0
         self.NUM_OF_ENEMIES = NUM_OF_ENEMIES
 
         self.running = True
+        self.lost = False
+        self.started = False
 
-    def initialize(self):
+        self.typed_word = False
 
-        self.lives_text = self.canvas.create_text(
-            self.WIDTH - 100,
-            self.HEIGHT / 20,
-            text=f"Lives: {self.in_game_lives}",
-            font=("Consolas", int(min(self.WIDTH, self.HEIGHT) / 25)),
-            fill="white"
-        )
-        self.score_text = self.canvas.create_text(
-            self.WIDTH - 250,
-            self.HEIGHT / 20,
-            text=f"Score: {self.score}",
-            font=("Consolas", int(min(self.WIDTH, self.HEIGHT) / 25)),
-            fill="white"
-        )
-
+    def start(self):
         for i in range(self.NUM_OF_ENEMIES):
             self.spawn_new_enemy()
+
+        self.in_game_lives = self.LIVES
 
     def spawn_new_enemy(self):
         words_end = len(self.WORD_LIST) - 1
@@ -60,44 +51,54 @@ class Gameplay:
         self.WORD_LIST.remove(enemy_word)
 
     def remove_enemy(self, enemy):
-        #self.canvas.delete(*enemy.image)
         self.WORD_LIST.append(enemy.word)
 
     def take_damage(self, enemy):
         self.in_game_lives -= 1
-        #self.canvas.itemconfig(self.lives_text, text=f"Lives: {self.in_game_lives}")
-        #self.canvas.delete(*enemy.image)
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
         self.spawn_new_enemy()
 
     def add_score(self, enemy):
-        self.score += 1
-        #self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
-        #self.text_area.delete(0, END)
-        #self.canvas.delete(*enemy.image)
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
         self.spawn_new_enemy()
 
-    def draw(self):
-        pass
-
-    def start(self, text_input):
+    def update(self, text_input, word_speed):
+        if not self.started:
+            self.word_speed = word_speed
+            self.start()
+            self.started = True
 
         if self.in_game_lives > 0:
-            for enemy in self.words:
-                enemy.move()
-                if enemy.word_exited():
-                    self.take_damage(enemy)
-                if enemy.word_typed(text_input):
-                    self.add_score(enemy)
             for word in self.words:
-                word.word_typed(text_input)
+                word.update()
+                word.move()
+                if word.word_exited():
+                    self.take_damage(word)
+                if word.check_word(text_input):
+                    self.add_score(word)
+                    self.typed_word = True
         else:  # DEAD
-            #self.text_area.delete(0, END)
             for enemy in self.words:
                 self.remove_enemy(enemy)
             self.words = []
-            #self.canvas.delete(self.lives_text)
-            #self.canvas.delete(self.score_text)
+            self.lost = True
+            self.started = False
+
+    def draw_ui(self, screen: pg.Surface, score: int):
+        font = pg.font.SysFont("Consolas", 25)
+        lives_surf = font.render(f"Lives: {self.in_game_lives}", True, "white")
+        lives_rect = lives_surf.get_rect(center=(self.WIDTH - 100, self.HEIGHT // 20))
+        screen.blit(lives_surf, lives_rect)
+
+        font = pg.font.SysFont("Consolas", 25)
+        score_surf = font.render(f"Score: {score}", True, "white")
+        score_rect = score_surf.get_rect(center=(self.WIDTH - 250, self.HEIGHT // 20))
+        screen.blit(score_surf, score_rect)
+
+    def draw(self, screen, score):
+        for word in self.words:
+            word.draw(screen)
+
+        self.draw_ui(screen, score)
