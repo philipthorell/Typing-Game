@@ -10,6 +10,7 @@ from menu import MainMenu, GameOver
 #   FIX, SO THAT WHEN USER TYPES THE END OF A WORD WRONG AND CONTINUE TO TYPE, THEY ONLY NEED
 #        TO REMOVE THE LAST LETTERS OF THE WORD (INSTEAD OF THE "INVISIBLE" ONES AT THE FAR BACK)
 #   FIX, SO THAT WORDS CAN'T SPAWN INSIDE EACH OTHER
+#   ADD, RETRY BUTTON AT GAME-OVER-SCREEN
 
 
 class Game:
@@ -24,11 +25,11 @@ class Game:
 
     def __init__(self):
 
-        S_WORDS = "swedish_words.txt"
-        E_WORDS = "english_words.txt"
+        self.S_WORDS = "swedish_words.txt"
+        self.E_WORDS = "english_words.txt"
 
-        with open(S_WORDS, "r") as file:
-            WORD_LIST = [word.replace("\n", "") for word in file.readlines()]
+        with open(self.E_WORDS, "r") as file:
+            self.WORD_LIST = [word.replace("\n", "") for word in file.readlines()]
 
         self.running = True
         self.word_speed = self.NORMAL_SPEED
@@ -46,13 +47,16 @@ class Game:
 
         self.text_input = ""
 
+        self.title_words = []
+        self.gameplay_words = []
+        self.game_over_words = []
+
         self.main_menu = True
         self.gameplay = False
         self.game_over = False
 
         self.gameplay_screen = Gameplay(
             self.screen,
-            WORD_LIST,
             self.LIVES,
             self.NUM_OF_ENEMIES,
             self.WIDTH,
@@ -70,6 +74,46 @@ class Game:
             self.WIDTH,
             self.HEIGHT
         )
+
+        self.english_words()
+
+    def english_words(self):
+        self.title_words = [
+            "start", "exit", "easy", "medium", "hard",
+            "(spacebar = clear the text)", "Languages"
+        ]
+        self.gameplay_words = [
+            "Lives", "Score"
+        ]
+        self.game_over_words = [
+            "GAME OVER", "Score", "main", "exit"
+        ]
+
+        with open(self.E_WORDS, "r") as file:
+            self.WORD_LIST = [word.replace("\n", "") for word in file.readlines()]
+
+        self.main_menu_screen.get_word_pack(self.title_words)
+        self.gameplay_screen.get_word_pack(self.WORD_LIST, self.gameplay_words)
+        self.game_over_screen.get_word_pack(self.game_over_words)
+
+    def swedish_words(self):
+        self.title_words = [
+            "starta", "avsluta", "lätt", "normal", "svår",
+            "(mellanslag = rensa texten)", "Språk"
+        ]
+        self.gameplay_words = [
+            "Liv", "Poäng"
+        ]
+        self.game_over_words = [
+            "SPEL ÖVER", "Poäng", "main", "avsluta"
+        ]
+
+        with open(self.S_WORDS, "r") as file:
+            self.WORD_LIST = [word.replace("\n", "") for word in file.readlines()]
+
+        self.main_menu_screen.get_word_pack(self.title_words)
+        self.gameplay_screen.get_word_pack(self.WORD_LIST, self.gameplay_words)
+        self.game_over_screen.get_word_pack(self.game_over_words)
 
     def check_word(self, items_list: list[list[tuple[str, str]]], correct_text_list: list[str]):
         for idx, items in enumerate(items_list):
@@ -127,6 +171,15 @@ class Game:
                     self.running = False
             elif type(recv) is float or type(recv) is int:
                 self.word_speed = recv
+                self.text_input = ""
+
+            if self.main_menu_screen.change_to_swedish:
+                self.swedish_words()
+                self.main_menu_screen.change_to_swedish = False
+                self.text_input = ""
+            elif self.main_menu_screen.change_to_english:
+                self.english_words()
+                self.main_menu_screen.change_to_english = False
                 self.text_input = ""
 
         elif self.gameplay:

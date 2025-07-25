@@ -6,13 +6,13 @@ from word import Word
 
 
 class Gameplay:
-    def __init__(self, screen, WORD_LIST, LIVES, NUM_OF_ENEMIES, WIDTH, HEIGHT):
+    def __init__(self, screen, LIVES, NUM_OF_ENEMIES, WIDTH, HEIGHT):
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
 
         self.screen = screen
 
-        self.WORD_LIST = WORD_LIST
+        self.WORD_LIST = []
         self.words = []
 
         self.word_speed = 1
@@ -26,6 +26,14 @@ class Gameplay:
         self.started = False
 
         self.typed_word = False
+
+        self.lives_text = ""
+        self.score_text = ""
+
+    def get_word_pack(self, WORD_LIST, gameplay_words):
+        self.WORD_LIST = WORD_LIST
+        self.lives_text = gameplay_words[0]
+        self.score_text = gameplay_words[1]
 
     def start(self):
         for i in range(self.NUM_OF_ENEMIES):
@@ -94,12 +102,12 @@ class Gameplay:
 
     def draw_ui(self, screen: pg.Surface, score: int):
         font = pg.font.SysFont("Consolas", 25)
-        lives_surf = font.render(f"Lives: {self.in_game_lives}", True, "white")
+        lives_surf = font.render(f"{self.lives_text}: {self.in_game_lives}", True, "white")
         lives_rect = lives_surf.get_rect(center=(self.WIDTH - 100, self.HEIGHT // 20))
         screen.blit(lives_surf, lives_rect)
 
         font = pg.font.SysFont("Consolas", 25)
-        score_surf = font.render(f"Score: {score}", True, "white")
+        score_surf = font.render(f"{self.score_text}: {score}", True, "white")
         score_rect = score_surf.get_rect(center=(self.WIDTH - 250, self.HEIGHT // 20))
         screen.blit(score_surf, score_rect)
 

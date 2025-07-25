@@ -12,19 +12,41 @@ class MainMenu:
         self.word_speed = self.NORMAL_SPEED
 
         self.running = True
+        self.change_to_swedish = False
+        self.change_to_english = False
 
-        self.start_text = "start"
-        self.start_items = [(char, "white") for char in self.start_text]
-        self.exit_text = "exit"
-        self.exit_items = [(char, "white") for char in self.exit_text]
-        self.easy_text = "easy"
-        self.easy_items = [(char, "white") for char in self.easy_text]
-        self.normal_text = "normal"
-        self.normal_items = [(char, "white") for char in self.normal_text]
-        self.hard_text = "hard"
-        self.hard_items = [(char, "white") for char in self.hard_text]
+        self.start_text = ""
+        self.start_items = []
+        self.exit_text = ""
+        self.exit_items = []
+        self.easy_text = ""
+        self.easy_items = []
+        self.medium_text = ""
+        self.medium_items = []
+        self.hard_text = ""
+        self.hard_items = []
+        self.swedish_text = "svenska"
+        self.swedish_items = [(char, "white") for char in self.swedish_text]
+        self.english_text = "english"
+        self.english_items = [(char, "white") for char in self.english_text]
+        self.tip_text = ""
+        self.language_text = ""
 
         self.arrow_y = 200
+
+    def get_word_pack(self, title_words: list[str]):
+        self.start_text = title_words[0]
+        self.start_items = [(char, "white") for char in self.start_text]
+        self.exit_text = title_words[1]
+        self.exit_items = [(char, "white") for char in self.exit_text]
+        self.easy_text = title_words[2]
+        self.easy_items = [(char, "white") for char in self.easy_text]
+        self.medium_text = title_words[3]
+        self.medium_items = [(char, "white") for char in self.medium_text]
+        self.hard_text = title_words[4]
+        self.hard_items = [(char, "white") for char in self.hard_text]
+        self.tip_text = title_words[5]
+        self.language_text = title_words[6]
 
     @staticmethod
     def create_word_surface(items: list[tuple[str, str]],
@@ -66,8 +88,14 @@ class MainMenu:
 
     def draw_tip(self, screen: pg.Surface):
         font = pg.font.SysFont("Consolas", 15)
-        tip_surf = font.render("(spacebar = clear text)", True, "white")
-        tip_rect = tip_surf.get_rect(center=(115, self.HEIGHT - 25))
+        tip_surf = font.render(self.tip_text, True, "white")
+        tip_rect = tip_surf.get_rect(center=(125, 25))
+        screen.blit(tip_surf, tip_rect)
+
+    def draw_language(self, screen: pg.Surface):
+        font = pg.font.SysFont("Consolas", 25)
+        tip_surf = font.render(f"{self.language_text}:", True, "white")
+        tip_rect = tip_surf.get_rect(topleft=(15, self.HEIGHT - 110))
         screen.blit(tip_surf, tip_rect)
 
     def draw(self, screen: pg.Surface, text_input):
@@ -78,22 +106,28 @@ class MainMenu:
 
         self.draw_text(screen, text_input, self.easy_items, self.easy_text,
                        25, (780, 150))
-        self.draw_text(screen, text_input, self.normal_items, self.normal_text,
+        self.draw_text(screen, text_input, self.medium_items, self.medium_text,
                        25, (780, 200))
         self.draw_text(screen, text_input, self.hard_items, self.hard_text,
                        25, (780, 250))
 
+        self.draw_text(screen, text_input, self.swedish_items, self.swedish_text,
+                       25, (100, self.HEIGHT - 60))
+        self.draw_text(screen, text_input, self.english_items, self.english_text,
+                       25, (100, self.HEIGHT - 25))
+
+        self.draw_language(screen)
         self.draw_arrow(screen)
         self.draw_tip(screen)
 
     def update(self, text_input, check_word):
         items_list = [
             self.start_items, self.exit_items, self.easy_items,
-            self.normal_items, self.hard_items
+            self.medium_items, self.hard_items, self.swedish_items, self.english_items
         ]
         correct_text_list = [
             self.start_text, self.exit_text, self.easy_text,
-            self.normal_text, self.hard_text
+            self.medium_text, self.hard_text, self.swedish_text, self.english_text
         ]
         check_word(items_list, correct_text_list)
 
@@ -107,13 +141,19 @@ class MainMenu:
             self.arrow_y = 150
             return self.EASY_SPEED
 
-        elif text_input == self.normal_text:
+        elif text_input == self.medium_text:
             self.arrow_y = 200
             return self.NORMAL_SPEED
 
         elif text_input == self.hard_text:
             self.arrow_y = 250
             return self.HARD_SPEED
+
+        elif text_input == self.swedish_text:
+            self.change_to_swedish = True
+
+        elif text_input == self.english_text:
+            self.change_to_english = True
 
 
 class GameOver:
@@ -129,9 +169,19 @@ class GameOver:
         self.main = False
         self.exit = False
 
-        self.main_text = "main"
+        self.main_text = ""
+        self.main_items = []
+        self.exit_text = ""
+        self.exit_items = []
+        self.game_over_text = ""
+        self.score_text = ""
+
+    def get_word_pack(self, words):
+        self.game_over_text = words[0]
+        self.score_text = words[1]
+        self.main_text = words[2]
         self.main_items = [(char, "white") for char in self.main_text]
-        self.exit_text = "exit"
+        self.exit_text = words[3]
         self.exit_items = [(char, "white") for char in self.exit_text]
 
     def initialize(self):
@@ -188,11 +238,11 @@ class GameOver:
                        (self.WIDTH // 2 + 70, 370), padding=5)
 
         font = pg.font.SysFont("Consolas", 80)
-        gg_surf = font.render("GAME OVER", True, "red")
+        gg_surf = font.render(f"{self.game_over_text}", True, "red")
         gg_rect = gg_surf.get_rect(center=(self.WIDTH // 2, 160))
         screen.blit(gg_surf, gg_rect)
 
         font = pg.font.SysFont("Consolas", 40)
-        score_surf = font.render(f"score: {score}", True, "white")
+        score_surf = font.render(f"{self.score_text}: {score}", True, "white")
         score_rect = score_surf.get_rect(center=(self.WIDTH // 2, 230))
         screen.blit(score_surf, score_rect)

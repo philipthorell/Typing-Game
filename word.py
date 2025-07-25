@@ -21,11 +21,11 @@ class Word:
 
         self.font = pg.font.SysFont("Consolas", 40)
 
-        self.word_surface = None
-        self.word_rect = None
+        self.word_surface: pg.Surface | None = None
+        self.word_rect: pg.Rect | None = None
 
     def word_exited(self):
-        if self.x >= self.WIDTH:
+        if self.word_rect.left >= self.WIDTH:
             return True
         return False
 
