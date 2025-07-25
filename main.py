@@ -14,7 +14,7 @@ from menu import MainMenu, GameOver
 
 
 class Game:
-    WIDTH, HEIGHT = 1000, 500  # Aspect ratio must be 2:1
+    WIDTH, HEIGHT = 1000, 500  # Aspect ratio must be 2:1 (1000x500)
 
     EASY_SPEED = 0.5  # 0.5
     NORMAL_SPEED = 1  # 1
