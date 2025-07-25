@@ -13,7 +13,7 @@ class Word:
         self.HEIGHT = SCREEN_HEIGHT
 
         self.word = word
-        self.letters = [(char, (255, 255, 255)) for char in self.word]
+        self.letters = [(char, "white") for char in self.word]
 
         self.x = x
         self.y = y
@@ -57,26 +57,3 @@ class Word:
 
     def move(self):
         self.x += self.x_velocity
-
-    def check_word(self, typed_word: str):
-
-        typed_letters = min(len(typed_word), len(self.word))
-
-        # Start with everything white
-        for i in range(len(self.letters)):
-            self.letters[i] = (self.word[i], (255, 255, 255))  # white
-
-        # Apply green color progressively if each letter is correct
-        if typed_letters > 0 and typed_word[0] == self.word[0]:
-            self.letters[0] = (self.word[0], (0, 255, 0))  # green
-
-            for i in range(1, typed_letters):
-                if typed_word[i] == self.word[i] and self.letters[i - 1][1] == (0, 255, 0):
-                    self.letters[i] = (self.word[i], (0, 255, 0))  # green
-                else:
-                    break
-
-        if typed_word == self.word:
-            return True
-
-        return False

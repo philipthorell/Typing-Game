@@ -14,37 +14,20 @@ class MainMenu:
         self.running = True
 
         self.start_text = "start"
-        self.start_items = [(char, (255, 255, 255)) for char in self.start_text]
+        self.start_items = [(char, "white") for char in self.start_text]
         self.exit_text = "exit"
-        self.exit_items = [(char, (255, 255, 255)) for char in self.exit_text]
+        self.exit_items = [(char, "white") for char in self.exit_text]
         self.easy_text = "easy"
-        self.easy_items = [(char, (255, 255, 255)) for char in self.easy_text]
+        self.easy_items = [(char, "white") for char in self.easy_text]
         self.normal_text = "normal"
-        self.normal_items = [(char, (255, 255, 255)) for char in self.normal_text]
+        self.normal_items = [(char, "white") for char in self.normal_text]
         self.hard_text = "hard"
-        self.hard_items = [(char, (255, 255, 255)) for char in self.hard_text]
+        self.hard_items = [(char, "white") for char in self.hard_text]
 
         self.arrow_y = 200
 
-    def check_word(self, typed_word: str, items: list[tuple[str, tuple[int, int, int]]], correct_text: str):
-        typed_letters = min(len(typed_word), len(correct_text))
-
-        # Start with everything white
-        for i in range(len(items)):
-            items[i] = (correct_text[i], (255, 255, 255))  # white
-
-        # Apply green color progressively if each letter is correct
-        if typed_letters > 0 and typed_word[0] == correct_text[0]:
-            items[0] = (correct_text[0], (0, 255, 0))  # green
-
-            for i in range(1, typed_letters):
-                if typed_word[i] == correct_text[i] and items[i - 1][1] == (0, 255, 0):
-                    items[i] = (correct_text[i], (0, 255, 0))  # green
-                else:
-                    break
-
     @staticmethod
-    def create_word_surface(items: list[tuple[str, tuple[int, int, int]]],
+    def create_word_surface(items: list[tuple[str, str]],
                             font: pg.font.Font, padding=10):
         """Render a word from (char, color) items into a single surface, and return it with its rect."""
         char_surfaces = []
@@ -69,7 +52,6 @@ class MainMenu:
     def draw_text(self, screen: pg.Surface, text_input: str, items: list,
                   text: str, font_size: int, pos: tuple[int, int]):
 
-        self.check_word(text_input, items, text)
         # Create the word surface
         font = pg.font.SysFont("Consolas", font_size)
         word_surface, word_rect = self.create_word_surface(items, font)
@@ -104,7 +86,17 @@ class MainMenu:
         self.draw_arrow(screen)
         self.draw_tip(screen)
 
-    def start(self, text_input):
+    def update(self, text_input, check_word):
+        items_list = [
+            self.start_items, self.exit_items, self.easy_items,
+            self.normal_items, self.hard_items
+        ]
+        correct_text_list = [
+            self.start_text, self.exit_text, self.easy_text,
+            self.normal_text, self.hard_text
+        ]
+        check_word(items_list, correct_text_list)
+
         if text_input == self.start_text:
             return "s"
 
@@ -138,31 +130,18 @@ class GameOver:
         self.exit = False
 
         self.main_text = "main"
-        self.main_items = [(char, (255, 255, 255)) for char in self.main_text]
+        self.main_items = [(char, "white") for char in self.main_text]
         self.exit_text = "exit"
-        self.exit_items = [(char, (255, 255, 255)) for char in self.exit_text]
+        self.exit_items = [(char, "white") for char in self.exit_text]
 
     def initialize(self):
         self.in_game_lives = self.LIVES
 
-    def check_word(self, typed_word: str, items: list[tuple[str, tuple[int, int, int]]], correct_text: str):
-        typed_letters = min(len(typed_word), len(correct_text))
+    def update(self, text_input, check_word):
+        items_list = [self.main_items, self.exit_items]
+        correct_text_list = [self.main_text, self.exit_text]
+        check_word(items_list, correct_text_list)
 
-        # Start with everything white
-        for i in range(len(items)):
-            items[i] = (correct_text[i], (255, 255, 255))  # white
-
-        # Apply green color progressively if each letter is correct
-        if typed_letters > 0 and typed_word[0] == correct_text[0]:
-            items[0] = (correct_text[0], (0, 255, 0))  # green
-
-            for i in range(1, typed_letters):
-                if typed_word[i] == correct_text[i] and items[i - 1][1] == (0, 255, 0):
-                    items[i] = (correct_text[i], (0, 255, 0))  # green
-                else:
-                    break
-
-    def update(self, text_input):
         if text_input == self.main_text:
             self.main = True
 
@@ -170,7 +149,7 @@ class GameOver:
             self.exit = True
 
     @staticmethod
-    def create_word_surface(items: list[tuple[str, tuple[int, int, int]]],
+    def create_word_surface(items: list[tuple[str, str]],
                             font: pg.font.Font, padding=10):
         """Render a word from (char, color) items into a single surface, and return it with its rect."""
         char_surfaces = []
@@ -192,10 +171,9 @@ class GameOver:
 
         return word_surface, word_surface.get_rect()
 
-    def draw_text(self, screen: pg.Surface, text_input: str, items: list,
-                  text: str, font_size: int, pos: tuple[int, int], padding: int = 10):
+    def draw_text(self, screen: pg.Surface, items: list, font_size: int,
+                  pos: tuple[int, int], padding: int = 10):
 
-        self.check_word(text_input, items, text)
         # Create the word surface
         font = pg.font.SysFont("Consolas", font_size)
         word_surface, word_rect = self.create_word_surface(items, font, padding)
@@ -203,11 +181,11 @@ class GameOver:
         screen.blit(word_surface, word_rect)
 
     def draw(self, screen, text_input, score):
-        self.draw_text(screen, text_input, self.main_items, self.main_text,
-                       30, (self.WIDTH // 2 - 70, 370), padding=5)
+        self.draw_text(screen, self.main_items, 30,
+                       (self.WIDTH // 2 - 70, 370), padding=5)
 
-        self.draw_text(screen, text_input, self.exit_items, self.exit_text,
-                       30, (self.WIDTH // 2 + 70, 370), padding=5)
+        self.draw_text(screen, self.exit_items, 30,
+                       (self.WIDTH // 2 + 70, 370), padding=5)
 
         font = pg.font.SysFont("Consolas", 80)
         gg_surf = font.render("GAME OVER", True, "red")

@@ -64,7 +64,16 @@ class Gameplay:
         self.WORD_LIST.append(enemy.word)
         self.spawn_new_enemy()
 
-    def update(self, text_input, word_speed):
+    def update(self, text_input, word_speed, check_word):
+        items_list = [word.letters for word in self.words]
+        correct_text_list = [word.word for word in self.words]
+        check_word(items_list, correct_text_list)
+
+        for word in self.words:
+            if text_input == word.word:
+                self.add_score(word)
+                self.typed_word = True
+
         if not self.started:
             self.word_speed = word_speed
             self.start()
@@ -76,9 +85,6 @@ class Gameplay:
                 word.move()
                 if word.word_exited():
                     self.take_damage(word)
-                if word.check_word(text_input):
-                    self.add_score(word)
-                    self.typed_word = True
         else:  # DEAD
             for enemy in self.words:
                 self.remove_enemy(enemy)
