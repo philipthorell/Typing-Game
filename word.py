@@ -3,14 +3,7 @@ import pygame as pg
 
 class Word:
 
-    def __init__(self,
-                 x, y,
-                 x_vel,
-                 word,
-                 SCREEN_WIDTH, SCREEN_HEIGHT):
-
-        self.WIDTH = SCREEN_WIDTH
-        self.HEIGHT = SCREEN_HEIGHT
+    def __init__(self, x, y, x_vel, word):
 
         self.word = word
         self.letters = [(char, "white") for char in self.word]
@@ -25,7 +18,7 @@ class Word:
         self.word_rect: pg.Rect | None = None
 
     def word_exited(self):
-        if self.word_rect.left >= self.WIDTH:
+        if self.word_rect.left >= 1000:
             return True
         return False
 

@@ -1,15 +1,16 @@
 import pygame as pg
 
+from collections.abc import Callable
 from random import randint
 
 from word import Word
 
 
 class Gameplay:
-    def __init__(self, screen, LIVES, NUM_OF_ENEMIES, WIDTH, HEIGHT):
-        self.WIDTH = WIDTH
-        self.HEIGHT = HEIGHT
-
+    """
+    Class to contain the gameplay details.
+    """
+    def __init__(self, screen: pg.Surface, LIVES: int, NUM_OF_ENEMIES: int):
         self.screen = screen
 
         self.WORD_LIST = []
@@ -25,54 +26,61 @@ class Gameplay:
         self.lost = False
         self.started = False
 
+        # Track if a word has been typed
         self.typed_word = False
 
         self.lives_text = ""
         self.score_text = ""
 
-    def get_word_pack(self, WORD_LIST, gameplay_words):
+    def get_word_pack(self, WORD_LIST: list[str], gameplay_words: tuple[str, str]) -> None:
         self.WORD_LIST = WORD_LIST
         self.lives_text = gameplay_words[0]
         self.score_text = gameplay_words[1]
 
-    def start(self):
+    def start(self) -> None:
         for i in range(self.NUM_OF_ENEMIES):
             self.spawn_new_enemy()
 
         self.in_game_lives = self.LIVES
 
-    def spawn_new_enemy(self):
+    def spawn_new_enemy(self) -> None:
         words_end = len(self.WORD_LIST) - 1
         enemy_word = (self.WORD_LIST[randint(0, words_end)])
         enemy_x = randint((-300), (-100))
-        enemy_y = randint(int(self.HEIGHT / 8.333), int(self.HEIGHT - self.HEIGHT / 10))
+        enemy_y = randint(60, int(450))
 
         self.words.append(Word(
             enemy_x,
             enemy_y,
             self.word_speed,
-            enemy_word,
-            self.WIDTH,
-            self.HEIGHT
+            enemy_word
         ))
 
         self.WORD_LIST.remove(enemy_word)
 
-    def remove_enemy(self, enemy):
+    def remove_enemy(self, enemy) -> None:
         self.WORD_LIST.append(enemy.word)
 
-    def take_damage(self, enemy):
+    def take_damage(self, enemy) -> None:
         self.in_game_lives -= 1
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
         self.spawn_new_enemy()
 
-    def add_score(self, enemy):
+    def add_score(self, enemy) -> None:
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
         self.spawn_new_enemy()
 
-    def update(self, text_input, word_speed, check_word):
+    def update(self, text_input: str, word_speed: float, check_word: Callable) -> None:
+        """
+
+        :param text_input:
+        :param word_speed:
+        :param check_word:
+        :return:
+        """
+        # Creates a list of the word's letters to be checked by the check_word() function.
         items_list = [word.letters for word in self.words]
         correct_text_list = [word.word for word in self.words]
         check_word(items_list, correct_text_list)
@@ -100,18 +108,18 @@ class Gameplay:
             self.lost = True
             self.started = False
 
-    def draw_ui(self, screen: pg.Surface, score: int):
+    def draw_ui(self, screen: pg.Surface, score: int) -> None:
         font = pg.font.SysFont("Consolas", 25)
         lives_surf = font.render(f"{self.lives_text}: {self.in_game_lives}", True, "white")
-        lives_rect = lives_surf.get_rect(center=(self.WIDTH - 100, self.HEIGHT // 20))
+        lives_rect = lives_surf.get_rect(center=(900, 25))
         screen.blit(lives_surf, lives_rect)
 
         font = pg.font.SysFont("Consolas", 25)
         score_surf = font.render(f"{self.score_text}: {score}", True, "white")
-        score_rect = score_surf.get_rect(center=(self.WIDTH - 250, self.HEIGHT // 20))
+        score_rect = score_surf.get_rect(center=(750, 25))
         screen.blit(score_surf, score_rect)
 
-    def draw(self, screen, score):
+    def draw(self, screen, score) -> None:
         for word in self.words:
             word.draw(screen)
 

@@ -1,20 +1,29 @@
 import pygame as pg
 
+from collections.abc import Callable
+
 
 class MainMenu:
-    def __init__(self, screen, SPEEDS, WIDTH, HEIGHT):
-        self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
-
+    """
+    Class that contains all the main-menu details.
+    """
+    def __init__(self, screen: pg.Surface, SPEEDS: tuple[float, float, float]):
         self.screen = screen
-
         self.EASY_SPEED, self.NORMAL_SPEED, self.HARD_SPEED = SPEEDS
-
         self.word_speed = self.NORMAL_SPEED
 
         self.running = True
+
+        # Tracks if a certain word is typed.
+        self.start_is_typed = False
+        self.exit_is_typed = False
+        self.easy_is_typed = False
+        self.medium_is_typed = False
+        self.hard_is_typed = False
         self.change_to_swedish = False
         self.change_to_english = False
 
+        # Creates strings and lists of the typeable words.
         self.start_text = ""
         self.start_items = []
         self.exit_text = ""
@@ -29,137 +38,145 @@ class MainMenu:
         self.swedish_items = [(char, "white") for char in self.swedish_text]
         self.english_text = "english"
         self.english_items = [(char, "white") for char in self.english_text]
+
+        # Text for non-typeable words.
         self.tip_text = ""
         self.language_text = ""
 
+        # Sets difficulty-arrow's Y position to point at medium.
         self.arrow_y = 200
 
-    def get_word_pack(self, title_words: list[str]):
-        self.start_text = title_words[0]
+    def get_word_pack(self, words: list[str]) -> None:
+        """
+        Gets the language word-pack, and changes all words to that specific language.
+        :param words: A list of all the words from the pack.
+        :return: None
+        """
+        # Sets all the text-variables to a string of the word.
+        # Sets all the items-variables to a list of the (letters & color) of the word.
+        self.start_text = words[0]
         self.start_items = [(char, "white") for char in self.start_text]
-        self.exit_text = title_words[1]
+        self.exit_text = words[1]
         self.exit_items = [(char, "white") for char in self.exit_text]
-        self.easy_text = title_words[2]
+        self.easy_text = words[2]
         self.easy_items = [(char, "white") for char in self.easy_text]
-        self.medium_text = title_words[3]
+        self.medium_text = words[3]
         self.medium_items = [(char, "white") for char in self.medium_text]
-        self.hard_text = title_words[4]
+        self.hard_text = words[4]
         self.hard_items = [(char, "white") for char in self.hard_text]
-        self.tip_text = title_words[5]
-        self.language_text = title_words[6]
+        self.tip_text = words[5]
+        self.language_text = words[6]
 
-    @staticmethod
-    def create_word_surface(items: list[tuple[str, str]],
-                            font: pg.font.Font, padding=10):
-        """Render a word from (char, color) items into a single surface, and return it with its rect."""
-        char_surfaces = []
-        total_width = 0
-        max_height = 0
-
-        # Render each character surface
-        for char, color in items:
-            surf = font.render(char, True, color)
-            char_surfaces.append(surf)
-            total_width += surf.get_width() + padding
-            max_height = max(max_height, surf.get_height())
-
-        word_surface = pg.Surface((total_width, max_height), pg.SRCALPHA)
-        x = 0
-        for surf in char_surfaces:
-            word_surface.blit(surf, (x, 0))
-            x += surf.get_width() + padding
-
-        return word_surface, word_surface.get_rect()
-
-    def draw_text(self, screen: pg.Surface, text_input: str, items: list,
-                  text: str, font_size: int, pos: tuple[int, int]):
-
-        # Create the word surface
-        font = pg.font.SysFont("Consolas", font_size)
-        word_surface, word_rect = self.create_word_surface(items, font)
-        word_rect.center = pos  # Move the box around as needed
-        screen.blit(word_surface, word_rect)
-
-    def draw_arrow(self, screen: pg.Surface):
+    def draw_arrow(self, screen: pg.Surface) -> None:
+        """
+        Draws the difficulty arrow, to indicate the selected difficulty.
+        :param screen: A pygame surface to draw the arrow on.
+        :return: None
+        """
+        # Gets the font and draws the text on the screen.
         font = pg.font.SysFont("Consolas", 25)
         arrow_surf = font.render("<", True, "white")
         arrow_rect = arrow_surf.get_rect(center=(870, self.arrow_y))
         screen.blit(arrow_surf, arrow_rect)
 
-    def draw_tip(self, screen: pg.Surface):
+    def draw_tip(self, screen: pg.Surface) -> None:
+        """
+        Draws the tip that mentions how to clear the text in the top left corner.
+        :param screen: A pygame surface to draw the tip on.
+        :return: None
+        """
+        # Gets the font and draws the text on the screen.
         font = pg.font.SysFont("Consolas", 15)
         tip_surf = font.render(self.tip_text, True, "white")
         tip_rect = tip_surf.get_rect(center=(125, 25))
         screen.blit(tip_surf, tip_rect)
 
-    def draw_language(self, screen: pg.Surface):
+    def draw_language(self, screen: pg.Surface) -> None:
+        """
+        Draws the language indicator at the bottom left on the screen.
+        :param screen: A pygame surface to draw the text on.
+        :return: None
+        """
+        # Gets the font and draws the text on the screen.
         font = pg.font.SysFont("Consolas", 25)
         tip_surf = font.render(f"{self.language_text}:", True, "white")
-        tip_rect = tip_surf.get_rect(topleft=(15, self.HEIGHT - 110))
+        tip_rect = tip_surf.get_rect(topleft=(15, 390))
         screen.blit(tip_surf, tip_rect)
 
-    def draw(self, screen: pg.Surface, text_input):
-        self.draw_text(screen, text_input, self.start_items, self.start_text,
-                       80, (self.WIDTH // 2, 200))
-        self.draw_text(screen, text_input, self.exit_items, self.exit_text,
-                       30, (self.WIDTH // 2, 400))
+    def draw(self, screen: pg.Surface, draw_typeable_text: Callable) -> None:
+        """
+        Handles the drawing of all the main-menu texts.
+        :param screen: A pygame surface to draw everything on.
+        :param draw_typeable_text: A function that creates a surface and draws the typeable text.
+        :return: None
+        """
+        # Draws the start and exit texts.
+        draw_typeable_text(self.start_items, 80, (500, 200))
+        draw_typeable_text(self.exit_items, 30, (500, 400))
 
-        self.draw_text(screen, text_input, self.easy_items, self.easy_text,
-                       25, (780, 150))
-        self.draw_text(screen, text_input, self.medium_items, self.medium_text,
-                       25, (780, 200))
-        self.draw_text(screen, text_input, self.hard_items, self.hard_text,
-                       25, (780, 250))
+        # Draws the difficulty texts.
+        draw_typeable_text(self.easy_items, 25, (780, 150))
+        draw_typeable_text(self.medium_items, 25, (780, 200))
+        draw_typeable_text(self.hard_items, 25, (780, 250))
 
-        self.draw_text(screen, text_input, self.swedish_items, self.swedish_text,
-                       25, (100, self.HEIGHT - 60))
-        self.draw_text(screen, text_input, self.english_items, self.english_text,
-                       25, (100, self.HEIGHT - 25))
+        # Draws the language texts.
+        draw_typeable_text(self.swedish_items, 25, (100, 440))
+        draw_typeable_text(self.english_items, 25, (100, 475))
 
+        # Draws the non-typeable text.
         self.draw_language(screen)
         self.draw_arrow(screen)
         self.draw_tip(screen)
 
-    def update(self, text_input, check_word):
+    def update(self, text_input: str, check_word: Callable) -> None:
+        """
+        Handles updating the main-menu screen by checking if the typeable words are typed.
+        :param text_input: A string of the players typed letters.
+        :param check_word: A function that change the colors of the words letters
+        depending on if the player has typed them or not.
+        :return: None
+        """
+        # Creates a list of all the typeable word's letters to be checked by
+        # the check_word() function.
         items_list = [
             self.start_items, self.exit_items, self.easy_items,
             self.medium_items, self.hard_items, self.swedish_items, self.english_items
         ]
+        # Creates a list of all the typeable words to be checked by the check_word() function.
         correct_text_list = [
             self.start_text, self.exit_text, self.easy_text,
             self.medium_text, self.hard_text, self.swedish_text, self.english_text
         ]
+        # Changes the color of the word's letters if they are being typed.
         check_word(items_list, correct_text_list)
 
+        # Checks if the typeable words are being typed.
         if text_input == self.start_text:
-            return "s"
-
+            self.start_is_typed = True
         elif text_input == self.exit_text:
-            return "e"
+            self.exit_is_typed = True
 
         elif text_input == self.easy_text:
             self.arrow_y = 150
-            return self.EASY_SPEED
-
+            self.easy_is_typed = True
         elif text_input == self.medium_text:
             self.arrow_y = 200
-            return self.NORMAL_SPEED
-
+            self.medium_is_typed = True
         elif text_input == self.hard_text:
             self.arrow_y = 250
-            return self.HARD_SPEED
+            self.hard_is_typed = True
 
         elif text_input == self.swedish_text:
             self.change_to_swedish = True
-
         elif text_input == self.english_text:
             self.change_to_english = True
 
 
 class GameOver:
-    def __init__(self, screen, LIVES, WIDTH, HEIGHT):
-        self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
-
+    """
+    Class that contain all the game-over details.
+    """
+    def __init__(self, screen: pg.Surface, LIVES: int):
         self.screen = screen
         self.LIVES = LIVES
 
@@ -169,6 +186,7 @@ class GameOver:
         self.main = False
         self.exit = False
 
+        # Creates strings and lists of the typeable words.
         self.main_text = ""
         self.main_items = []
         self.exit_text = ""
@@ -176,7 +194,14 @@ class GameOver:
         self.game_over_text = ""
         self.score_text = ""
 
-    def get_word_pack(self, words):
+    def get_word_pack(self, words: list[str]) -> None:
+        """
+        Gets the language word-pack, and changes all words to that specific language.
+        :param words: A list of all the words from the pack.
+        :return: None
+        """
+        # Sets all the text-variables to a string of the word.
+        # Sets all the items-variables to a list of the (letters & color) of the word.
         self.game_over_text = words[0]
         self.score_text = words[1]
         self.main_text = words[2]
@@ -184,65 +209,47 @@ class GameOver:
         self.exit_text = words[3]
         self.exit_items = [(char, "white") for char in self.exit_text]
 
-    def initialize(self):
-        self.in_game_lives = self.LIVES
-
-    def update(self, text_input, check_word):
+    def update(self, text_input: str, check_word: Callable) -> None:
+        """
+        Handles updating the main-menu screen by checking if the typeable words are typed.
+        :param text_input: A string of the players typed letters.
+        :param check_word: A function that change the colors of the words letters
+        depending on if the player has typed them or not.
+        :return: None
+        """
+        # Creates lists of all the typeable word's letters and strings to be checked by
+        # the check_word() function.
         items_list = [self.main_items, self.exit_items]
         correct_text_list = [self.main_text, self.exit_text]
+        # Changes the color of the word's letters if they are being typed.
         check_word(items_list, correct_text_list)
 
+        # Checks if the typeable words are being typed.
         if text_input == self.main_text:
             self.main = True
-
         if text_input == self.exit_text:
             self.exit = True
 
-    @staticmethod
-    def create_word_surface(items: list[tuple[str, str]],
-                            font: pg.font.Font, padding=10):
-        """Render a word from (char, color) items into a single surface, and return it with its rect."""
-        char_surfaces = []
-        total_width = 0
-        max_height = 0
+    def draw(self, screen: pg.Surface, score: int, draw_typeable_text: Callable) -> None:
+        """
+        Handles the drawing of all the game-over texts.
+        :param screen: A pygame surface to draw everything on.
+        :param score: An int of the players score
+        :param draw_typeable_text: A function that creates a surface and draws the typeable text.
+        :return: None
+        """
+        # Draws the start and exit texts
+        draw_typeable_text(self.main_items, 30, (440, 370), padding=5, positioning="tr")
+        draw_typeable_text(self.exit_items, 30, (560, 370), padding=5, positioning="tl")
 
-        # Render each character surface
-        for char, color in items:
-            surf = font.render(char, True, color)
-            char_surfaces.append(surf)
-            total_width += surf.get_width() + padding
-            max_height = max(max_height, surf.get_height())
-
-        word_surface = pg.Surface((total_width, max_height), pg.SRCALPHA)
-        x = 0
-        for surf in char_surfaces:
-            word_surface.blit(surf, (x, 0))
-            x += surf.get_width() + padding
-
-        return word_surface, word_surface.get_rect()
-
-    def draw_text(self, screen: pg.Surface, items: list, font_size: int,
-                  pos: tuple[int, int], padding: int = 10):
-
-        # Create the word surface
-        font = pg.font.SysFont("Consolas", font_size)
-        word_surface, word_rect = self.create_word_surface(items, font, padding)
-        word_rect.center = pos  # Move the box around as needed
-        screen.blit(word_surface, word_rect)
-
-    def draw(self, screen, text_input, score):
-        self.draw_text(screen, self.main_items, 30,
-                       (self.WIDTH // 2 - 70, 370), padding=5)
-
-        self.draw_text(screen, self.exit_items, 30,
-                       (self.WIDTH // 2 + 70, 370), padding=5)
-
+        # Draws the GAME OVER text
         font = pg.font.SysFont("Consolas", 80)
         gg_surf = font.render(f"{self.game_over_text}", True, "red")
-        gg_rect = gg_surf.get_rect(center=(self.WIDTH // 2, 160))
+        gg_rect = gg_surf.get_rect(center=(500, 160))
         screen.blit(gg_surf, gg_rect)
 
+        # Draws the score text
         font = pg.font.SysFont("Consolas", 40)
         score_surf = font.render(f"{self.score_text}: {score}", True, "white")
-        score_rect = score_surf.get_rect(center=(self.WIDTH // 2, 230))
+        score_rect = score_surf.get_rect(center=(500, 230))
         screen.blit(score_surf, score_rect)
