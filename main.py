@@ -11,6 +11,7 @@ from menu import MainMenu, GameOver
 #        TO REMOVE THE LAST LETTERS OF THE WORD (INSTEAD OF THE "INVISIBLE" ONES AT THE FAR BACK)
 #   FIX, SO THAT WORDS CAN'T SPAWN INSIDE EACH OTHER
 #   ADD, RETRY BUTTON AT GAME-OVER-SCREEN
+#   FIX, SO THAT WORD CONSTANTLY SPAWN AND THE FREQUENCY DEPENDS ON THE DIFFICULTY
 
 
 class Game:
@@ -88,16 +89,16 @@ class Game:
         Changes the words in main-menu, gameplay, and game-over, to English.
         :return: None
         """
-        self.title_words = [
+        self.title_words = (
             "start", "exit", "easy", "medium", "hard",
             "(spacebar = clear the text)", "Languages"
-        ]
-        self.gameplay_words = [
+        )
+        self.gameplay_words = (
             "Lives", "Score"
-        ]
-        self.game_over_words = [
+        )
+        self.game_over_words = (
             "GAME OVER", "Score", "main", "exit"
-        ]
+        )
 
         # Reads in and replaces the WORD_LIST from the given .txt file.
         with open(self.E_WORDS, "r") as file:
@@ -113,16 +114,16 @@ class Game:
         Changes the words in main-menu, gameplay, and game-over, to Swedish.
         :return: None
         """
-        self.title_words = [
+        self.title_words = (
             "starta", "avsluta", "lätt", "normal", "svår",
             "(mellanslag = rensa texten)", "Språk"
-        ]
-        self.gameplay_words = [
+        )
+        self.gameplay_words = (
             "Liv", "Poäng"
-        ]
-        self.game_over_words = [
+        )
+        self.game_over_words = (
             "SPEL ÖVER", "Poäng", "main", "avsluta"
-        ]
+        )
 
         # Reads in and replaces the WORD_LIST from the given .txt file.
         with open(self.S_WORDS, "r") as file:
@@ -357,7 +358,7 @@ class Game:
 
         # Draws the gameplay.
         elif self.gameplay:
-            self.gameplay_screen.draw(self.screen, self.score)
+            self.gameplay_screen.draw(self.screen, self.score, self.draw_text)
 
         # Draws the game-over.
         elif self.game_over:

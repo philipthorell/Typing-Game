@@ -46,10 +46,10 @@ class MainMenu:
         # Sets difficulty-arrow's Y position to point at medium.
         self.arrow_y = 200
 
-    def get_word_pack(self, words: list[str]) -> None:
+    def get_word_pack(self, words: tuple) -> None:
         """
         Gets the language word-pack, and changes all words to that specific language.
-        :param words: A list of all the words from the pack.
+        :param words: A tuple of all the word strings from the pack.
         :return: None
         """
         # Sets all the text-variables to a string of the word.
@@ -194,10 +194,10 @@ class GameOver:
         self.game_over_text = ""
         self.score_text = ""
 
-    def get_word_pack(self, words: list[str]) -> None:
+    def get_word_pack(self, words: tuple) -> None:
         """
         Gets the language word-pack, and changes all words to that specific language.
-        :param words: A list of all the words from the pack.
+        :param words: A tuple of all the word strings from the pack.
         :return: None
         """
         # Sets all the text-variables to a string of the word.
@@ -239,8 +239,8 @@ class GameOver:
         :return: None
         """
         # Draws the start and exit texts
-        draw_typeable_text(self.main_items, 30, (440, 370), padding=5, positioning="tr")
-        draw_typeable_text(self.exit_items, 30, (560, 370), padding=5, positioning="tl")
+        draw_typeable_text(self.main_items, 30, (440, 370), padding=5, placement="tr")
+        draw_typeable_text(self.exit_items, 30, (560, 370), padding=5, placement="tl")
 
         # Draws the GAME OVER text
         font = pg.font.SysFont("Consolas", 80)
