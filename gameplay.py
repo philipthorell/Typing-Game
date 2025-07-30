@@ -55,16 +55,25 @@ class Gameplay:
         """
         self.in_game_lives = lives
 
-    def spawn_new_enemy(self) -> None:
+    def spawn_new_enemy(self, difficulty: str) -> None:
         """
         Spawn a new word-enemy, and temporarily remove the random word from the WORD_LIST
         to get different words each time.
         :return: None
         """
         # Pick a random word from WORD_LIST and give it random starting coordinates.
-        words_end = len(self.WORD_LIST) - 1
-        enemy_word = (self.WORD_LIST[randint(0, words_end)])
-        enemy_x = -400
+        if difficulty == "easy":
+            new_word_list = [word for word in self.WORD_LIST if len(word) < 7]
+            enemy_x = -150
+        elif difficulty == "hard" or difficulty == "medium":
+            new_word_list = [word for word in self.WORD_LIST]
+            enemy_x = -300
+        elif difficulty == "extreme":
+            new_word_list = [word for word in self.WORD_LIST if len(word) > 4]
+            enemy_x = -400
+
+        words_end = len(new_word_list) - 1
+        enemy_word = (new_word_list[randint(0, words_end)])
 
         y_positions = self.y_pos.copy()
 
@@ -110,7 +119,13 @@ class Gameplay:
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
 
-    def update(self, text_input: str, word_speed: float, spawn_time: int, lives: int, check_word: Callable) -> None:
+    def update(self,
+               text_input: str,
+               word_speed: float,
+               spawn_time: int,
+               lives: int,
+               difficulty: str,
+               check_word: Callable) -> None:
         """
         Handles the updating of the players lives, score, and word-enemy details.
         :param text_input: A string of the players typed letters.
@@ -141,7 +156,7 @@ class Gameplay:
             # Spawn enemies
             if current_time - self.last_time > spawn_time:
                 self.last_time = current_time
-                self.spawn_new_enemy()
+                self.spawn_new_enemy(difficulty)
             # Update and move all the word-enemies.
             for word in self.words:
                 word.move()

@@ -46,6 +46,7 @@ class Game:
         self.word_speed = self.MEDIUM_SPEED
         self.in_game_lives = self.LIVES
         self.spawn_time = self.MEDIUM_SPAWN_TIME
+        self.difficulty = "medium"
 
         # Initializes pygame, with the screen, clock, caption, and FPS.
         pg.font.init()
@@ -223,6 +224,7 @@ class Game:
                 self.word_speed = self.EASY_SPEED
                 self.spawn_time = self.EASY_SPAWN_TIME
                 self.in_game_lives = self.LIVES
+                self.difficulty = "easy"
                 # Resets the variable.
                 self.main_menu_screen.easy_is_typed = False
             elif self.main_menu_screen.medium_is_typed:
@@ -230,6 +232,7 @@ class Game:
                 self.word_speed = self.MEDIUM_SPEED
                 self.spawn_time = self.MEDIUM_SPAWN_TIME
                 self.in_game_lives = self.LIVES
+                self.difficulty = "medium"
                 # Resets the variable.
                 self.main_menu_screen.medium_is_typed = False
             elif self.main_menu_screen.hard_is_typed:
@@ -237,6 +240,7 @@ class Game:
                 self.word_speed = self.HARD_SPEED
                 self.spawn_time = self.HARD_SPAWN_TIME
                 self.in_game_lives = self.LIVES
+                self.difficulty = "hard"
                 # Resets the variable.
                 self.main_menu_screen.hard_is_typed = False
             elif self.main_menu_screen.extreme_is_typed:
@@ -244,6 +248,7 @@ class Game:
                 self.word_speed = self.EXTREME_SPEED
                 self.spawn_time = self.EXTREME_SPAWN_TIME
                 self.in_game_lives = self.EXTREME_LIVES
+                self.difficulty = "extreme"
                 # Resets the variable.
                 self.main_menu_screen.extreme_is_typed = False
 
@@ -268,6 +273,7 @@ class Game:
                 self.word_speed,
                 self.spawn_time,
                 self.in_game_lives,
+                self.difficulty,
                 self.check_word
             )
 
