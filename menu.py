@@ -7,10 +7,8 @@ class MainMenu:
     """
     Class that contains all the main-menu details.
     """
-    def __init__(self, screen: pg.Surface, SPEEDS: tuple[float, float, float]):
+    def __init__(self, screen: pg.Surface):
         self.screen = screen
-        self.EASY_SPEED, self.NORMAL_SPEED, self.HARD_SPEED = SPEEDS
-        self.word_speed = self.NORMAL_SPEED
 
         self.running = True
 
@@ -20,6 +18,7 @@ class MainMenu:
         self.easy_is_typed = False
         self.medium_is_typed = False
         self.hard_is_typed = False
+        self.extreme_is_typed = False
         self.change_to_swedish = False
         self.change_to_english = False
 
@@ -28,12 +27,16 @@ class MainMenu:
         self.start_items = []
         self.exit_text = ""
         self.exit_items = []
+
         self.easy_text = ""
         self.easy_items = []
         self.medium_text = ""
         self.medium_items = []
         self.hard_text = ""
         self.hard_items = []
+        self.extreme_text = ""
+        self.extreme_items = []
+
         self.swedish_text = "svenska"
         self.swedish_items = [(char, "white") for char in self.swedish_text]
         self.english_text = "english"
@@ -64,8 +67,10 @@ class MainMenu:
         self.medium_items = [(char, "white") for char in self.medium_text]
         self.hard_text = words[4]
         self.hard_items = [(char, "white") for char in self.hard_text]
-        self.tip_text = words[5]
-        self.language_text = words[6]
+        self.extreme_text = words[5]
+        self.extreme_items = [(char, "white") for char in self.extreme_text]
+        self.tip_text = words[6]
+        self.language_text = words[7]
 
     def draw_arrow(self, screen: pg.Surface) -> None:
         """
@@ -76,7 +81,7 @@ class MainMenu:
         # Gets the font and draws the text on the screen.
         font = pg.font.SysFont("Consolas", 25)
         arrow_surf = font.render("<", True, "white")
-        arrow_rect = arrow_surf.get_rect(center=(870, self.arrow_y))
+        arrow_rect = arrow_surf.get_rect(center=(880, self.arrow_y))
         screen.blit(arrow_surf, arrow_rect)
 
     def draw_tip(self, screen: pg.Surface) -> None:
@@ -118,6 +123,7 @@ class MainMenu:
         draw_typeable_text(self.easy_items, 25, (780, 150))
         draw_typeable_text(self.medium_items, 25, (780, 200))
         draw_typeable_text(self.hard_items, 25, (780, 250))
+        draw_typeable_text(self.extreme_items, 25, (780, 300))
 
         # Draws the language texts.
         draw_typeable_text(self.swedish_items, 25, (100, 440))
@@ -139,13 +145,13 @@ class MainMenu:
         # Creates a list of all the typeable word's letters to be checked by
         # the check_word() function.
         items_list = [
-            self.start_items, self.exit_items, self.easy_items,
-            self.medium_items, self.hard_items, self.swedish_items, self.english_items
+            self.start_items, self.exit_items, self.easy_items, self.medium_items,
+            self.hard_items, self.extreme_items, self.swedish_items, self.english_items
         ]
         # Creates a list of all the typeable words to be checked by the check_word() function.
         correct_text_list = [
-            self.start_text, self.exit_text, self.easy_text,
-            self.medium_text, self.hard_text, self.swedish_text, self.english_text
+            self.start_text, self.exit_text, self.easy_text, self.medium_text,
+            self.hard_text, self.extreme_text, self.swedish_text, self.english_text
         ]
         # Changes the color of the word's letters if they are being typed.
         check_word(items_list, correct_text_list)
@@ -165,6 +171,9 @@ class MainMenu:
         elif text_input == self.hard_text:
             self.arrow_y = 250
             self.hard_is_typed = True
+        elif text_input == self.extreme_text:
+            self.arrow_y = 300
+            self.extreme_is_typed = True
 
         elif text_input == self.swedish_text:
             self.change_to_swedish = True
@@ -176,9 +185,8 @@ class GameOver:
     """
     Class that contain all the game-over details.
     """
-    def __init__(self, screen: pg.Surface, LIVES: int):
+    def __init__(self, screen: pg.Surface):
         self.screen = screen
-        self.LIVES = LIVES
 
         self.in_game_lives = 0
 

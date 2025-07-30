@@ -1,7 +1,7 @@
 import pygame as pg
 
 from collections.abc import Callable
-from random import randint
+from random import randint, choice
 
 from word import Word
 
@@ -10,7 +10,7 @@ class Gameplay:
     """
     Class to contain the gameplay details.
     """
-    def __init__(self, screen: pg.Surface, LIVES: int, NUM_OF_ENEMIES: int):
+    def __init__(self, screen: pg.Surface):
         self.screen = screen
 
         self.WORD_LIST = []
@@ -18,9 +18,7 @@ class Gameplay:
 
         self.word_speed = 1
 
-        self.LIVES = LIVES
-        self.in_game_lives = self.LIVES
-        self.NUM_OF_ENEMIES = NUM_OF_ENEMIES
+        self.in_game_lives = 0
 
         self.running = True
         self.lost = False
@@ -31,6 +29,11 @@ class Gameplay:
 
         self.lives_text = ""
         self.score_text = ""
+
+        self.last_time = 0
+
+        # Word-enemies y positions
+        self.y_pos = [10 + (i * 40) for i in range(1, 11)]
 
     def get_word_pack(self, WORD_LIST: list[str], words: tuple[str, str]) -> None:
         """
@@ -45,15 +48,12 @@ class Gameplay:
         self.lives_text = words[0]
         self.score_text = words[1]
 
-    def start(self) -> None:
+    def reset(self, lives) -> None:
         """
-        Spawns in the word-enemies, and resets the players lives.
+        Resets the players lives.
         :return: None
         """
-        for i in range(self.NUM_OF_ENEMIES):
-            self.spawn_new_enemy()
-
-        self.in_game_lives = self.LIVES
+        self.in_game_lives = lives
 
     def spawn_new_enemy(self) -> None:
         """
@@ -64,8 +64,19 @@ class Gameplay:
         # Pick a random word from WORD_LIST and give it random starting coordinates.
         words_end = len(self.WORD_LIST) - 1
         enemy_word = (self.WORD_LIST[randint(0, words_end)])
-        enemy_x = randint((-400), (-200))
-        enemy_y = randint(60, int(450))
+        enemy_x = -400
+
+        y_positions = self.y_pos.copy()
+
+        for word in self.words:
+            if word.y in y_positions:
+                y_positions.remove(word.y)
+
+        if len(y_positions) == 0:
+            y_positions = self.y_pos.copy()
+            y_positions.remove(self.words[-1].y)
+
+        enemy_y = choice(y_positions)
 
         # Create a new word-enemy instance and append it to the words list.
         self.words.append(Word(
@@ -87,7 +98,6 @@ class Gameplay:
         self.in_game_lives -= 1
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
-        self.spawn_new_enemy()
 
     def add_score(self, enemy: Word) -> None:
         """
@@ -99,9 +109,8 @@ class Gameplay:
         self.typed_word = True
         self.words.remove(enemy)
         self.WORD_LIST.append(enemy.word)
-        self.spawn_new_enemy()
 
-    def update(self, text_input: str, word_speed: float, check_word: Callable) -> None:
+    def update(self, text_input: str, word_speed: float, spawn_time: int, lives: int, check_word: Callable) -> None:
         """
         Handles the updating of the players lives, score, and word-enemy details.
         :param text_input: A string of the players typed letters.
@@ -109,6 +118,7 @@ class Gameplay:
         :param check_word: A function that checks if letters of the word-enemies is typed.
         :return: None
         """
+        current_time = pg.time.get_ticks()
         # Creates a list of the word-enemies letters to be checked by the check_word() function.
         items_list = [word.letters for word in self.words]
         correct_text_list = [word.word for word in self.words]
@@ -123,11 +133,15 @@ class Gameplay:
         # Spawns in the enemies at the start of the game.
         if not self.started:
             self.word_speed = word_speed
-            self.start()
+            self.reset(lives)
             self.started = True
 
         # Update the word-enemies if the player is alive.
         if self.in_game_lives > 0:
+            # Spawn enemies
+            if current_time - self.last_time > spawn_time:
+                self.last_time = current_time
+                self.spawn_new_enemy()
             # Update and move all the word-enemies.
             for word in self.words:
                 word.move()

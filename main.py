@@ -9,9 +9,7 @@ from menu import MainMenu, GameOver
 #   ADD, WORD-PACKS (INCLUDING CUSTOM WORD-PACKS)
 #   FIX, SO THAT WHEN USER TYPES THE END OF A WORD WRONG AND CONTINUE TO TYPE, THEY ONLY NEED
 #        TO REMOVE THE LAST LETTERS OF THE WORD (INSTEAD OF THE "INVISIBLE" ONES AT THE FAR BACK)
-#   FIX, SO THAT WORDS CAN'T SPAWN INSIDE EACH OTHER
 #   ADD, RETRY BUTTON AT GAME-OVER-SCREEN
-#   FIX, SO THAT WORD CONSTANTLY SPAWN AND THE FREQUENCY DEPENDS ON THE DIFFICULTY
 
 
 class Game:
@@ -20,11 +18,18 @@ class Game:
     """
     WIDTH, HEIGHT = 1000, 500  # Aspect ratio must be 2:1 (1000x500)
 
-    EASY_SPEED = 0.5  # 0.5
-    NORMAL_SPEED = 1  # 1
+    EASY_SPEED = 0.8  # 0.5
+    MEDIUM_SPEED = 1.5  # 1
     HARD_SPEED = 1.5  # 1.5
+    EXTREME_SPEED = 2.0  # 2.0
+
+    EASY_SPAWN_TIME = 5 * 1000  # 5 sec
+    MEDIUM_SPAWN_TIME = 3.5 * 1000  # 3 sec
+    HARD_SPAWN_TIME = 2 * 1000  # 2 sec
+    EXTREME_SPAWN_TIME = 1 * 1000  # 1 sec
+
     LIVES = 3  # 3
-    NUM_OF_ENEMIES = 5  # 5
+    EXTREME_LIVES = 1  # 1
 
     score = 0
 
@@ -38,8 +43,9 @@ class Game:
             self.WORD_LIST = [word.replace("\n", "") for word in file.readlines()]
 
         self.running = True
-        self.word_speed = self.NORMAL_SPEED
+        self.word_speed = self.MEDIUM_SPEED
         self.in_game_lives = self.LIVES
+        self.spawn_time = self.MEDIUM_SPAWN_TIME
 
         # Initializes pygame, with the screen, clock, caption, and FPS.
         pg.font.init()
@@ -67,19 +73,9 @@ class Game:
         self.game_over = False
 
         # Initializes the different parts of the game.
-        self.main_menu_screen = MainMenu(
-            self.screen,
-            (self.EASY_SPEED, self.NORMAL_SPEED, self.HARD_SPEED),
-        )
-        self.gameplay_screen = Gameplay(
-            self.screen,
-            self.LIVES,
-            self.NUM_OF_ENEMIES,
-        )
-        self.game_over_screen = GameOver(
-            self.screen,
-            self.LIVES,
-        )
+        self.main_menu_screen = MainMenu(self.screen)
+        self.gameplay_screen = Gameplay(self.screen)
+        self.game_over_screen = GameOver(self.screen)
 
         # Sets all the words to english to start with.
         self.english_words()
@@ -90,7 +86,7 @@ class Game:
         :return: None
         """
         self.title_words = (
-            "start", "exit", "easy", "medium", "hard",
+            "start", "exit", "easy", "medium", "hard", "extreme",
             "(spacebar = clear the text)", "Languages"
         )
         self.gameplay_words = (
@@ -115,7 +111,7 @@ class Game:
         :return: None
         """
         self.title_words = (
-            "starta", "avsluta", "lätt", "normal", "svår",
+            "starta", "avsluta", "lätt", "normal", "svår", "extrem",
             "(mellanslag = rensa texten)", "Språk"
         )
         self.gameplay_words = (
@@ -180,7 +176,6 @@ class Game:
                                     # If the user has typed more letters than the word
                                     # contains then just skip.
                                     except IndexError:
-                                        print("skipping word:", "".join([letters[0] for letters in items2]))
                                         continue
                                 # Make the letter red.
                                 if do_red:
@@ -197,7 +192,6 @@ class Game:
 
                     # If the user has typed more letters than the word contains then just break.
                     except IndexError:
-                        print("".join([letters[0] for letters in items]))
                         break
 
     def update(self) -> None:
@@ -227,18 +221,31 @@ class Game:
             elif self.main_menu_screen.easy_is_typed:
                 self.text_input = ""
                 self.word_speed = self.EASY_SPEED
+                self.spawn_time = self.EASY_SPAWN_TIME
+                self.in_game_lives = self.LIVES
                 # Resets the variable.
                 self.main_menu_screen.easy_is_typed = False
             elif self.main_menu_screen.medium_is_typed:
                 self.text_input = ""
-                self.word_speed = self.NORMAL_SPEED
+                self.word_speed = self.MEDIUM_SPEED
+                self.spawn_time = self.MEDIUM_SPAWN_TIME
+                self.in_game_lives = self.LIVES
                 # Resets the variable.
                 self.main_menu_screen.medium_is_typed = False
             elif self.main_menu_screen.hard_is_typed:
                 self.text_input = ""
                 self.word_speed = self.HARD_SPEED
+                self.spawn_time = self.HARD_SPAWN_TIME
+                self.in_game_lives = self.LIVES
                 # Resets the variable.
                 self.main_menu_screen.hard_is_typed = False
+            elif self.main_menu_screen.extreme_is_typed:
+                self.text_input = ""
+                self.word_speed = self.EXTREME_SPEED
+                self.spawn_time = self.EXTREME_SPAWN_TIME
+                self.in_game_lives = self.EXTREME_LIVES
+                # Resets the variable.
+                self.main_menu_screen.extreme_is_typed = False
 
             # Checks if a language is typed and changes to that language if so.
             if self.main_menu_screen.change_to_swedish:
@@ -256,7 +263,13 @@ class Game:
         elif self.gameplay:
 
             # Update the gameplay screen to keep track of lives, score, and words typed.
-            self.gameplay_screen.update(self.text_input, self.word_speed, self.check_word)
+            self.gameplay_screen.update(
+                self.text_input,
+                self.word_speed,
+                self.spawn_time,
+                self.in_game_lives,
+                self.check_word
+            )
 
             # Checks if a word is typed and adds a score if so.
             if self.gameplay_screen.typed_word:
@@ -343,6 +356,7 @@ class Game:
         else:
             rect.center = pos  # Move the box around as needed
         self.screen.blit(word_surface, rect)
+        return rect
 
     def draw(self) -> None:
         """

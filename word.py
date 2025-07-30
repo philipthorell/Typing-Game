@@ -14,6 +14,9 @@ class Word:
         self.y = y
         self.x_velocity = x_vel
 
+        self.width = 0
+        self.height = 0
+
         self.font_size = 40
 
     def word_exited(self) -> bool:
@@ -31,7 +34,9 @@ class Word:
         :param draw_text: A function that draws typeable text.
         :return: None
         """
-        draw_text(self.letters, self.font_size, (self.x, self.y), placement="tl")
+        rect = draw_text(self.letters, self.font_size, (self.x, self.y), placement="tl")
+        self.width = rect.width
+        self.height = rect.height
 
     def move(self) -> None:
         """
