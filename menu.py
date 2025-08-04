@@ -181,16 +181,15 @@ class MainMenu:
             self.change_to_english = True
 
 
-class GameOver:
+class EndScreen:
     """
     Class that contain all the game-over details.
     """
-    def __init__(self, screen: pg.Surface):
+    def __init__(self, screen: pg.Surface, display_type: str):
         self.screen = screen
 
-        self.in_game_lives = 0
+        self.display_type = display_type  # either "gameover" or "victory"
 
-        self.running = True
         self.main = False
         self.exit = False
 

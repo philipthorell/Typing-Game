@@ -1,7 +1,7 @@
 import pygame as pg
 
 from gameplay import Gameplay
-from menu import MainMenu, GameOver
+from menu import MainMenu, EndScreen
 
 
 # TODO:
@@ -48,6 +48,9 @@ class Game:
         self.spawn_time = self.MEDIUM_SPAWN_TIME
         self.difficulty = "medium"
 
+        self.hard_unlocked = False
+        self.extreme_unlocked = False
+
         # Initializes pygame, with the screen, clock, caption, and FPS.
         pg.font.init()
         self.screen = pg.display.set_mode((self.WIDTH, self.HEIGHT))
@@ -76,7 +79,8 @@ class Game:
         # Initializes the different parts of the game.
         self.main_menu_screen = MainMenu(self.screen)
         self.gameplay_screen = Gameplay(self.screen)
-        self.game_over_screen = GameOver(self.screen)
+        self.game_over_screen = EndScreen(self.screen, "gameover")
+        self.victory_screen = EndScreen(self.screen, "victory")
 
         # Sets all the words to english to start with.
         self.english_words()
